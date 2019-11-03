@@ -25,14 +25,6 @@ public class Solution {
             this.parentNode = parentNode;
             this.childNode = childNode;
         }
-        public int getWeight() {
-            return edgeWeight;
-        }
-
-        public void setWeight(String name) {
-            this.edgeWeight = edgeWeight;
-        }
-
         @Override
         public String toString() {
             return "Union{" +
@@ -43,13 +35,7 @@ public class Solution {
 
         @Override
         public int compareTo(Union edge) {
-            if (this.getWeight() > this.getWeight()) {
-                return 1;
-            } else if (this.getWeight() < edge.getWeight()) {
-                return -1;
-            } else {
-                return 0;
-            }
+            return (this.edgeWeight - edge.edgeWeight);
         }
     }
 
@@ -59,12 +45,13 @@ public class Solution {
          */
         int sizeOfAdjMatrix = adj_matrix.size();
         boolean[] visitedNodes = new boolean[sizeOfAdjMatrix];
-
         int[] output = new int[sizeOfAdjMatrix];
         PriorityQueue<Union> pq = new PriorityQueue<>();
+        int rootnode = 0;
+        int initialUnion = 0;
 
         for (int i = 0; i < output.length; i++) {
-            output[i] = Integer.MAX_VALUE;
+            output[i] = -1;
         }
 
         for (int parent = 0; parent < sizeOfAdjMatrix; parent++) {
@@ -76,40 +63,62 @@ public class Solution {
             }
         }//end for the adj list
 
-        System.out.println(pq);
-        System.exit(-1);
-        while (!pq.isEmpty()){
-            int parent = pq.poll().parentNode;
-            int child = pq.poll().childNode;
 
-            //check if the parent is viisted
-            if (visitedNodes[parent] == true) {
-                //check if the child is visited
-                if (visitedNodes[child] == true) {
-                    //do nothing
-                }
-                else {
-                    visitedNodes[child] = true;
-                    output[child] = parent;
+        while (!pq.isEmpty()){
+            Union nodeComponent = pq.poll();
+            int nodeOne = nodeComponent.parentNode;
+            int nodeTwo = nodeComponent.childNode;
+            //since we know that 0 will always be the root node... then we can say..
+
+            if (output[nodeOne] == -1 && output[nodeTwo] == -1) {
+                ++initialUnion;
+                //this means that they are parents of themselves.... and they belong to 2 diff. sets.
+                //define their parent and child relationship
+                output[nodeTwo] = nodeOne;
+                output[nodeOne] = output[rootnode];
+                //root node changes when there is a union. if union, increment the counter
+                if (initialUnion == 1) {
+                    output[rootnode] = 0;
+                    output[rootnode] = output[rootnode] - 2;
                 }
             }
             else {
-                if (visitedNodes[child] == false) {
-                    visitedNodes[parent] = true;
-                    visitedNodes[child] = true;
-                    output[child] = parent;
+                //find the parents of node one and node 2, do this so we can find if there is a union
+                int node1parent = findParent(nodeOne, output);
+                int node2parent = findParent(nodeTwo, output);
+
+                if ( node1parent != node2parent){
+                    //a union can happen in this instance
+                    //find the value at the index of the parent node
+                    int rootvalue = output[node1parent];
+                    int otherRootValue = output[node2parent];
+
+                    if (rootvalue <= otherRootValue) {
+                        output[node2parent] = node1parent;
+
+                    }
+                    else {
+                        output[node1parent] = node2parent;
+                    }
+
+                    output[rootnode] = output[rootnode] - 2;
+
                 }
-                else {
-                    visitedNodes[parent] = true;
-                    output[child] = parent;
-                }
+
             }
 
         }
 
-        output[0] = -1;
-
-
+        output[rootnode] = -1;
         return output;
+    }
+
+    public int findParent(int node, int[] output){
+
+        if (output[node] <= 0) {
+            return node;
+        }
+
+        return findParent(output[node], output);
     }
 }
